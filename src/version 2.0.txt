@@ -1,0 +1,7 @@
+App Version 2.0
+
+-> Wallet Feature and inAppPurchases
+-> Course Categories duplication bug fix
+-> Multiple Pricing for same course supported
+-> Quiz answers not marked when check answer disabled fix
+->  Sample product to appear consistently for Wallet.

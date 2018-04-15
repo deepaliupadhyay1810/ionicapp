@@ -1,44 +1,101 @@
-import { Component, ViewChild } from '@angular/core';
-import { Nav, Platform } from 'ionic-angular';
-import { StatusBar } from '@ionic-native/status-bar';
-import { SplashScreen } from '@ionic-native/splash-screen';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { App, Platform, NavController, MenuController,LoadingController } from 'ionic-angular';
 
-import { HomePage } from '../pages/home/home';
-import { ListPage } from '../pages/list/list';
+//import { StatusBar, Splashscreen } from 'ionic-native';
+
+import { SplashScreen } from '@ionic-native/splash-screen';
+import { Intro } from '../pages/intro/intro';
+import { TabsPage } from '../pages/tabs/tabs';
+import { ContactPage } from '../pages/contact/contact';
+import { BlogPage } from '../pages/blog/blog';
+import { DirectoryPage } from '../pages/directory/directory';
+import { InstructorsPage } from '../pages/instructors/instructors';
+import { ConfigService } from '../services/config';
+import { Storage } from '@ionic/storage';
+import { ImgcacheService } from '../services/imageCache';
 
 @Component({
   templateUrl: 'app.html'
 })
-export class MyApp {
-  @ViewChild(Nav) nav: Nav;
+export class MyApp implements OnInit {
 
-  rootPage: any = HomePage;
+  styles:any;
+  tabsPage = TabsPage;
+  intro:Intro;
+  pages:any[]=[];
 
-  pages: Array<{title: string, component: any}>;
+  rootPage: any = 'Tabs';
+  loader: any;
 
-  constructor(public platform: Platform, public statusBar: StatusBar, public splashScreen: SplashScreen) {
-    this.initializeApp();
+  @ViewChild('nav') nav:NavController;
+  
+    constructor(private config:ConfigService,
+        private platform: Platform, 
+        private menuCtrl: MenuController,
+        private loadingCtrl:LoadingController,
+        private app:App,
+        private storage:Storage,
+        private imgcacheService:ImgcacheService,
+        public splashScreen: SplashScreen) {
 
-    // used for an example of ngFor and navigation
-    this.pages = [
-      { title: 'Home', component: HomePage },
-      { title: 'List', component: ListPage }
-    ];
 
-  }
+        this.presentLoading();
 
-  initializeApp() {
-    this.platform.ready().then(() => {
-      // Okay, so the platform is ready and our plugins are available.
-      // Here you can do any higher level native things you might need.
-      this.statusBar.styleDefault();
-      this.splashScreen.hide();
-    });
-  }
+        platform.ready().then(() => {
+            this.storage.get('introShown').then((result) => {
+                this.splashScreen.hide();
+                if(result){
 
-  openPage(page) {
-    // Reset the content nav to have just this page
-    // we wouldn't want the back button to show in this scenario
-    this.nav.setRoot(page.component);
-  }
+                    imgcacheService.initImgCache().then(() => {
+                      this.rootPage = TabsPage;
+                      this.loader.dismiss();
+                    });
+                    
+                    
+                } else {
+                    this.rootPage = Intro;
+                    
+                    let nav = this.app.getRootNav();
+                    imgcacheService.initImgCache().then(() => {
+                      nav.setRoot(this.rootPage);
+                      this.loader.dismiss();
+                    });
+                    
+                }
+            });
+        });
+
+        //Tracker
+        
+        this.pages =[
+          { title: config.get_translation('home_menu_title'), component: TabsPage, index: 0, hide:false},
+          { title: config.get_translation('directory_menu_title'), component: DirectoryPage, index: 2, hide:false},
+          { title: config.get_translation('instructors_menu_title'), component: InstructorsPage, index: 3, hide:false},
+          { title: config.get_translation('blog_menu_title'), component: BlogPage, index: 1, hide:false},
+          { title: config.get_translation('contact_menu_title'), component: ContactPage, index: 4, hide:false},
+        ];
+        
+    }
+
+    ngOnInit(){
+        this.config.initialize();
+    }
+
+    presentLoading() {
+        this.loader = this.loadingCtrl.create({
+            //content: "Loading..."
+        });
+        this.loader.present();
+    }
+
+    onLoad(page: any){
+        let nav = this.app.getRootNav();
+
+        nav.setRoot(page.component,{index:page.index});
+        //nav.push(page);
+        //this.app.getRootNav().push(page);
+        //this.nav.push(page);
+        //this.nav.setRoot(page);
+        this.menuCtrl.close();
+    }
 }
